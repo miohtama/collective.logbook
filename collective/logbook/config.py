@@ -43,5 +43,10 @@ PROP_KEY_LOG_MAILS = 'logbook_log_mails'
 PROP_KEY_LARGE_SITE = 'logbook_large_site'
 PROP_KEY_WEBHOOK_URLS = 'logbook_webhook_urls'
 
+#: XXX: Not impoelented yet
+# How many seconds we wait until we timeout the
+# the webhook HTTP request
+WEBHOOK_HTTP_TIMEOUT = 5.0
+
 
 # vim: set ft=python ts=4 sw=4 expandtab :

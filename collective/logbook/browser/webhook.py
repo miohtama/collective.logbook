@@ -1,12 +1,15 @@
-from Products.CMFCore.utils import getToolByName
-
-from collective.logbook.config import PROP_KEY_WEBHOOK_URLS
-
-from collective.logbook.config import LOGGER
-
+import socket
 import threading
 import urllib
 import urllib2
+
+
+from Products.CMFCore.utils import getToolByName
+
+from collective.logbook.config import PROP_KEY_WEBHOOK_URLS
+from collective.logbook.config import WEBHOOK_HTTP_TIMEOUT
+
+from collective.logbook.config import LOGGER as logger
 
 
 class WebhookView(object):
@@ -40,8 +43,8 @@ class WebhookView(object):
             subject, date, traceback,
             error_url, logbook_url)
 
-        LOGGER.info("Calling webhooks")
-        LOGGER.info("Webhook urls:\n%s" % ("\n".join(urls)))
+        logger.info("Calling webhooks")
+        logger.info("Webhook urls:\n%s" % ("\n".join(urls)))
 
         for url in urls:
 
@@ -57,7 +60,7 @@ class WebhookView(object):
 
 class UrlThread(threading.Thread):
     """
-    Separate thread doing HTTP POST so we won't block
+    A separate thread doing HTTP POST so we won't block when calling the webhook.
     """
     def __init__(self, url, data):
         threading.Thread.__init__(self)
@@ -65,10 +68,14 @@ class UrlThread(threading.Thread):
         self.data = data
 
     def run(self):
+        orignal_timeout = socket.getdefaulttimeout()
         try:
             self.data = urllib.urlencode(self.data)
+            socket.setdefaulttimeout(WEBHOOK_HTTP_TIMEOUT)
             r = urllib2.urlopen(self.url, self.data)
             r.read()
         except Exception as e:
-            LOGGER.error(e)
-            LOGGER.exception(e)
+            logger.error(e)
+            logger.exception(e)
+        finally:
+            socket.setdefaulttimeout(orignal_timeout)
